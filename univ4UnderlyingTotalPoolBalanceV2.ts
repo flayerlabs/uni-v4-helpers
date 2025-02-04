@@ -16,11 +16,8 @@ import {
 } from "viem";
 import { readContract } from "viem/actions";
 import { base, baseSepolia } from "viem/chains";
-import {
-  bytes32ToUint256,
-  getSqrtPriceX96FromTick,
-  uint256ToBytes32,
-} from "./utils/common";
+import { bytes32ToUint256, uint256ToBytes32 } from "./utils/common";
+import { calculateUnderlyingTokenBalances } from "./utils/liquidity";
 import {
   BidWallAddress,
   FairLaunchAddress,
@@ -30,7 +27,7 @@ import { BidWallABI } from "./abi/BidWall";
 import { PoolManagerABI } from "./abi/PoolManager";
 import { RPC_URL } from "./data/rpcs";
 import { FairLaunchABI } from "./abi/FairLaunch";
-import { getValidTick, TICK_FINDER, TICK_SPACING } from "./utils/univ4";
+import { getValidTick, TICK_FINDER, TICK_SPACING } from "./utils/ticks";
 
 let currentChain: Chain = base;
 
@@ -142,42 +139,6 @@ const getPoolSlot0 = async ({ poolId }: { poolId: Hex }) => {
     });
     return { sqrtPriceX96: 0n, tick: 0, protocolFee: 0, lpFee: 0 };
   }
-};
-
-export const calculateUnderlyingTokenBalances = (
-  liquidity: bigint,
-  tickLower: number,
-  tickUpper: number,
-  tickCurrent: number
-): { amount0: bigint; amount1: bigint } => {
-  const sqrtPriceCurrentX96 = getSqrtPriceX96FromTick(tickCurrent);
-  const sqrtPriceLowerX96 = getSqrtPriceX96FromTick(tickLower);
-  const sqrtPriceUpperX96 = getSqrtPriceX96FromTick(tickUpper);
-
-  let amount0: bigint = 0n;
-  let amount1: bigint = 0n;
-
-  if (tickCurrent <= tickLower) {
-    // Current tick is below the position range, all value in token0
-    amount0 =
-      (liquidity * (sqrtPriceUpperX96 - sqrtPriceLowerX96)) /
-      (sqrtPriceUpperX96 * sqrtPriceLowerX96);
-    amount0 = amount0 * 2n ** 96n; // Fix the scaling
-  } else if (tickCurrent >= tickUpper) {
-    // Current tick is above the position range, all value in token1
-    amount1 = liquidity * (sqrtPriceUpperX96 - sqrtPriceLowerX96);
-  } else {
-    // Current tick is within the position range, mixed tokens
-    amount0 =
-      (liquidity * (sqrtPriceUpperX96 - sqrtPriceCurrentX96)) /
-      sqrtPriceCurrentX96;
-    amount0 = amount0 / 2n ** 96n;
-
-    amount1 = liquidity * (sqrtPriceCurrentX96 - sqrtPriceLowerX96);
-    amount1 = amount1 / 2n ** 96n;
-  }
-
-  return { amount0, amount1 };
 };
 
 const getUnderlyingTotalPoolBalance = async ({ poolId }: { poolId: Hex }) => {
@@ -320,14 +281,6 @@ const getFairLaunchMemeOnlyPosition = async ({
     tickLower,
     tickUpper,
     salt: "",
-  });
-
-  console.log({
-    pos: "MEME only",
-    liquidity,
-    tickLower,
-    tickUpper,
-    tickCurrent,
   });
 
   const { amount0, amount1 } = calculateUnderlyingTokenBalances(

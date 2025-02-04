@@ -1,8 +1,13 @@
+import { TickMath } from "@uniswap/v3-sdk";
+
 export const TICK_SPACING = 60;
 
 export const TICK_FINDER = {
   MIN_TICK: -887220,
   MAX_TICK: 887220,
+};
+export const getSqrtPriceX96FromTick = (tick: number): bigint => {
+  return BigInt(TickMath.getSqrtRatioAtTick(tick).toString());
 };
 
 export const getValidTick = ({
