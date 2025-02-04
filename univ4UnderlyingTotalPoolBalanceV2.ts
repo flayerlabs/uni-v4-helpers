@@ -141,6 +141,7 @@ const getPoolSlot0 = async ({ poolId }: { poolId: Hex }) => {
   }
 };
 
+// NOTE: this results in inaccuracte results when memecoin is sold, but tracks the ETH amount incoming after a buy correctly
 const getUnderlyingTotalPoolBalance = async ({ poolId }: { poolId: Hex }) => {
   const tickLower = TickMath.MIN_TICK;
   const tickUpper = TickMath.MAX_TICK;
