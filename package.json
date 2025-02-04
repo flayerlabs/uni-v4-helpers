@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "tn": "ts-node"
+  },
+  "dependencies": {
+    "@uniswap/v3-sdk": "^3.24.0",
+    "dotenv": "^16.4.7",
+    "ts-node": "^10.4.0",
+    "typescript": "^5.2.2",
+    "viem": "^2.21.32"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.10"
+  }
+}
