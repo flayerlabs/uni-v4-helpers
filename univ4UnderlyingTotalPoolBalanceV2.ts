@@ -30,7 +30,7 @@ import { BidWallABI } from "./abi/BidWall";
 import { PoolManagerABI } from "./abi/PoolManager";
 import { RPC_URL } from "./data/rpcs";
 import { FairLaunchABI } from "./abi/FairLaunch";
-import { getValidTick, TICK_SPACING } from "./utils/univ4";
+import { getValidTick, TICK_FINDER, TICK_SPACING } from "./utils/univ4";
 
 let currentChain: Chain = base;
 
@@ -187,11 +187,6 @@ const getUnderlyingTotalPoolBalance = async ({ poolId }: { poolId: Hex }) => {
   const { liquidity } = await getPoolLiquidity({ poolId });
   const { tick: tickCurrent } = await getPoolSlot0({ poolId });
 
-  console.log({
-    liquidity,
-    tickCurrent,
-  });
-
   const { amount0, amount1 } = calculateUnderlyingTokenBalances(
     liquidity,
     tickLower,
@@ -284,15 +279,7 @@ const getFairLaunchETHOnlyPosition = async ({
     owner: FairLaunchAddress[currentChain.id],
     tickLower,
     tickUpper,
-    salt: "0x",
-  });
-
-  console.log({
-    pos: "ETH only",
-    liquidity,
-    tickLower,
-    tickUpper,
-    tickCurrent,
+    salt: "",
   });
 
   const { amount0, amount1 } = calculateUnderlyingTokenBalances(
@@ -320,11 +307,11 @@ const getFairLaunchMemeOnlyPosition = async ({
   let tickUpper: number;
 
   if (!currencyFlipped) {
-    tickLower = TickMath.MIN_TICK;
+    tickLower = TICK_FINDER.MIN_TICK;
     tickUpper = getValidTick({ tick: initialTick - 1, roundDown: true });
   } else {
     tickLower = getValidTick({ tick: initialTick + 1, roundDown: false });
-    tickUpper = TickMath.MAX_TICK;
+    tickUpper = TICK_FINDER.MAX_TICK;
   }
 
   const { liquidity } = await getPositionInfo({
@@ -332,7 +319,15 @@ const getFairLaunchMemeOnlyPosition = async ({
     owner: FairLaunchAddress[currentChain.id],
     tickLower,
     tickUpper,
-    salt: "0x",
+    salt: "",
+  });
+
+  console.log({
+    pos: "MEME only",
+    liquidity,
+    tickLower,
+    tickUpper,
+    tickCurrent,
   });
 
   const { amount0, amount1 } = calculateUnderlyingTokenBalances(
@@ -360,11 +355,6 @@ const getUnderlyingFairLaunchBalance = async ({
   });
 
   const { tick: tickCurrent } = await getPoolSlot0({ poolId });
-
-  console.log({
-    initialTick,
-    tickCurrent,
-  });
 
   const { amount0: amount0ETHOnlyPos, amount1: amount1ETHOnlyPos } =
     await getFairLaunchETHOnlyPosition({

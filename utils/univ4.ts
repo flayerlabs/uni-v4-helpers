@@ -1,5 +1,10 @@
 export const TICK_SPACING = 60;
 
+export const TICK_FINDER = {
+  MIN_TICK: -887220,
+  MAX_TICK: 887220,
+};
+
 export const getValidTick = ({
   tick,
   roundDown,
